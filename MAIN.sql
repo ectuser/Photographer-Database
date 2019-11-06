@@ -26,7 +26,7 @@ CREATE TABLE `вид требующегося ресурса` (
 );
 CREATE TABLE `ресурс` (
   `НомРес` int(11) NOT NULL AUTO_INCREMENT,
-  `ИмяНазвание` varchar(255) NOT NULL,
+  `ИмяНазвание` varchar(255),
   `НТР` int(11),
   PRIMARY KEY (`НомРес`),
   FOREIGN KEY (`НТР`) REFERENCES `вид требующегося ресурса` (`НТР`) ON DELETE CASCADE
@@ -71,6 +71,7 @@ CREATE TABLE `рабочая локация` (
 CREATE TABLE `результат` (
   `НР` int(11),
   `РаботаВыполнена` tinyint(1) NOT NULL DEFAULT '0',
+  `Тип выходного материала` varchar(255),
   FOREIGN KEY (`НР`) REFERENCES `работа` (`НР`) ON UPDATE CASCADE
 );
 
@@ -149,14 +150,18 @@ BEGIN
 
     SET newDuration = (new.Продолжительность);
     SET newWorkType = (new.НВР);
+    SET newContractNumber = (new.НД);
     
     SET hourPrice = (SELECT п.`СтоимостьЗаЧас` FROM прейскурант п WHERE workType = п.НВР);
     SET contractPrice = (SELECT д.Стоимость FROM договор д WHERE д.НД = contractNumber);
     SET contractPrice = contractPrice - hourPrice * duration;
 
+
     SET newHourPrice = (SELECT п.`СтоимостьЗаЧас` FROM прейскурант п WHERE newWorkType = п.НВР); 
-    SET contractPrice = contractPrice + newHourPrice * newDuration;   
+    SET newConractPrice = (SELECT д.Стоимость FROM договор д WHERE д.НД = newContractNumber);
+    SET newConractPrice = newConractPrice + newHourPrice * newDuration;   
 
     UPDATE договор д SET д.Стоимость = contractPrice WHERE contractNumber = д.НД;
+    UPDATE договор д SET д.Стоимость = newConractPrice WHERE newContractNumber = д.НД;
 END$$
 DELIMITER ;
